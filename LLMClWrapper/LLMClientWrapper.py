@@ -13,14 +13,15 @@ from functools import wraps
 #For adding jitter to retry delays
 import random
 
-logging.basicConfig(level=logging.INFO #INFO, warning,error and critical messages
-                    ,format='%(asctime)s - %(levelname)s -%(message)s')
-                    #format defines how each log message will look
+#If don't call this, the log might not show up or show up in very default format
+logging.basicConfig(level=logging.INFO #Python log has hierarchy: DEBUG<INFO<WARNING<ERROR<CRITICAL, set the threshold to "INFO" means to ignore debug but show everything else.
+                    ,format='%(asctime)s - %(levelname)s -%(message)s') #Add timestamp(Ex: 2026-02-05, 14:00:00), severity level(INFO, ERROR,...), the actual text you wrote in your log.
 
-#looks for existing logger with name you provided as parameter
-logger=logging.getLogger(__name__)
-#__name__ holds the name of current module name
-#if run main.py, __name__ = main. If file inside package(models/user.py),__name__ equals models.user
+#basicConfig sets the rules, logger as worker following the rules.
+#Instead of create a generic log, this create a specific object (logger instance) for specific file
+logger=logging.getLogger(__name__) #__name__ is a default python variable.
+#1.if run file directly, __name__ is __main__
+#2. If this file is imported, (database.py), then __name__ becomes database
 
 class LLMClientWrapper:
     
@@ -41,6 +42,20 @@ class LLMClientWrapper:
         self.requests_per_minute=requests_per_minute
     
         #Token bucket algorithm implementation:
+        """
+        Imagine a physical bucket that holds "tokens."
+
+        1.Token Generation: Tokens are added to the bucket at a constant, fixed rate (e.g., 5 tokens per second).
+
+        2.Capacity: The bucket has a maximum size. If the bucket is full, new tokens are discarded.
+
+        3.Processing: Every time a request (or packet) comes in, it must "grab" a token from the bucket to be processed.
+
+        4.The "Burst": If the bucket is full because no requests have happened for a while, a large "burst" of requests can all be processed instantly until the bucket is empty. Once empty, the system must wait for new tokens to generate.
+
+        Once the bucket is empty and a request is made, then the request is blocked and discarded.
+        """
+                 
         self.token_bucket=rate_limit_tokens_per_minute
         #track timestamps of recent requests for request-based rate limiting
         self.requests_tokens=[]#Lists of timestamps when requests were made
