@@ -42,20 +42,19 @@ class LLMClientWrapper:
         self.requests_per_minute=requests_per_minute
     
         #Token bucket algorithm implementation:
-        """
-        Imagine a physical bucket that holds "tokens."
+    """
+    Imagine a physical bucket that holds "tokens."
 
-        1.Token Generation: Tokens are added to the bucket at a constant, fixed rate (e.g., 5 tokens per second).
+    1.Token Generation: Tokens are added to the bucket at a constant, fixed rate (e.g., 5 tokens per second).
 
-        2.Capacity: The bucket has a maximum size. If the bucket is full, new tokens are discarded.
+    2.Capacity: The bucket has a maximum size. If the bucket is full, new tokens are discarded.
 
-        3.Processing: Every time a request (or packet) comes in, it must "grab" a token from the bucket to be processed.
+    3.Processing: Every time a request (or packet) comes in, it must "grab" a token from the bucket to be processed.
 
-        4.The "Burst": If the bucket is full because no requests have happened for a while, a large "burst" of requests can all be processed instantly until the bucket is empty. Once empty, the system must wait for new tokens to generate.
+    4.The "Burst": If the bucket is full because no requests have happened for a while, a large "burst" of requests can all be processed instantly until the bucket is empty. Once empty, the system must wait for new tokens to generate.
 
-        Once the bucket is empty and a request is made, then the request is blocked and discarded.
-        """
-                 
+    Once the bucket is empty and a request is made, then the request is blocked and discarded.
+    """
         self.token_bucket=rate_limit_tokens_per_minute
         #track timestamps of recent requests for request-based rate limiting
         self.requests_tokens=[]#Lists of timestamps when requests were made
@@ -73,6 +72,22 @@ class LLMClientWrapper:
                     f"rate_limit={rate_limit_tokens_per_minute} tokens/min")
         
     #Refill the token bucket based on elapsed time since last refill
+    #This is not a pure token bucket algorithm
+    """
+    For refill token bucket in token bucket:
+    def refill_token_bucket(self):
+        current_time = time.time()
+        time_elapsed = current_time - self.last_refill_time
+    
+        # Calculate refill
+        tokens_to_add = (time_elapsed / 60) * self.rate_limit_tokens_per_minute
+    
+        # Use a dedicated capacity variable if you want to allow bursts
+        self.token_bucket = min(self.max_capacity, self.token_bucket + tokens_to_add)
+    
+        self.last_refill_time = current_time
+        # NO NEED for self.requests_tokens list here!
+    """
     def refill_token_bucket(self):
         current_time=time.time()
         #Calculate how much time has passed since last refill
