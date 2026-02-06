@@ -51,6 +51,7 @@ class LLMClientWrapper:
         
         try:
             logger.info(f"Sending request to {self.model}...")
+            #The OpenAI AgentSDK have no access to the up to date datas.
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}]
