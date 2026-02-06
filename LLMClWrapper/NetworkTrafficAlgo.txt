@@ -1,4 +1,10 @@
-1. Leaky Bucket
+1.Token Bucket algorithm
+  -Token Generation: Tokens are added to the bucket at a constant, fixed rate (e.g., 5 tokens per second).
+  -Capacity: The bucket has a maximum size. If the bucket is full, new tokens are discarded.
+  -Processing: Every time a request (or packet) comes in, it must "grab" a token from the bucket to be processed.
+  -The "Burst": If the bucket is full because no requests have happened for a while, a large "burst" of requests can all be processed instantly until the bucket is empty. Once empty, the system must wait for new tokens to generate.
+
+2. Leaky Bucket
 Think of this as a bucket with a small hole in the bottom. No matter how much water (requests) you pour in at once, the water only drips out the bottom at a constant, steady rate.
 
 Key Difference: Unlike Token Bucket, it does not allow for bursts. It forces a perfectly smooth flow of traffic.
@@ -9,17 +15,17 @@ Similar to Token bucket, the Leaky Bucket also doesn't store the timestamp of ev
   -Check: If the bucket overflows, the request is discarded. If it fits, the request is processed at the steady output rate.
   -Update: Set last_update_time = current_time.
 
-2. Fixed Window Counter
+3. Fixed Window Counter
 The simplest method. It tracks the number of requests within a fixed timeframe (e.g., "100 requests per minute"). Once you hit 100, you are blocked until the next minute starts.
 
 Downside: It can suffer from "boundary spikes." If a user sends 100 requests at 10:00:59 and another 100 at 10:01:01, they technically sent 200 requests in two seconds, even though they stayed within the "per minute" limit.
 
-3. Sliding Window Log
+4. Sliding Window Log
 This tracks a timestamp for every single request. When a new request comes in, the system looks back at the last 60 seconds of history and counts the timestamps.
 
 Key Advantage: It is extremely accurate and prevents boundary spikes.
 
 Downside: It is memory-heavy because you have to store every single timestamp.
 
-4. Sliding Window Counter
+5.. Sliding Window Counter
 A hybrid between Fixed Window and Sliding Window Log. It uses a formula to estimate the number of requests in the current window based on the previous window's count. It’s memory-efficient but slightly less precise than the Log method.
