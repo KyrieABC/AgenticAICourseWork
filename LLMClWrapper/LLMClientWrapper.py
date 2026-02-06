@@ -1,8 +1,9 @@
 import time
 import logging
-from openai import OpenAI
+from openai import OpenAI,RateLimitError, APIStatusError, APIConnectionError
 import os
 from dotenv import load_dotenv
+import random # Useful for adding "jitter" to retries
 
 #If don't call this, the log might not show up or show up in very default format
 logging.basicConfig(
@@ -38,6 +39,58 @@ class LLMClientWrapper:
         self.tokens = min(self.max_capacity, self.tokens + new_tokens)
         self.last_refill_time = now
 
+    def generate_with_retry(self, prompt, max_retries=3):
+        """Generates a response with exponential backoff for transient errors."""
+        retries = 0
+        wait_time = 1  # Start with a 1-second wait
+
+        while retries <= max_retries:
+            # 1. Check our local Token Bucket first
+            self._refill()
+            if self.tokens < 1:
+                logger.warning(f"Local rate limit hit. Waiting {wait_time}s to retry...")
+                time.sleep(wait_time)
+                retries += 1
+                wait_time *= 2 # Exponential increase
+                continue
+
+            try:
+                self.tokens -= 1
+                logger.info(f"Attempt {retries + 1}: Sending request...")
+                
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[{"role": "user", "content": prompt}]
+                )
+                return response.choices[0].message.content
+
+            except RateLimitError as e:
+                # 2. Handle "429 Too Many Requests" from the Provider
+                logger.warning(f"Provider Rate Limit: {e}. Retrying...")
+                
+            except (APIConnectionError, APIStatusError) as e:
+                # 3. Handle "503 Service Unavailable" or Network Blips
+                if hasattr(e, 'status_code') and e.status_code >= 500:
+                    logger.warning(f"Server Error ({e.status_code}): {e}. Retrying...")
+                else:
+                    # 4. Handle Fatal Errors (401 Invalid Key, 400 Bad Request)
+                    logger.error(f"FATAL ERROR: {e}")
+                    raise  # Don't retry if the API key is wrong!
+
+            # If we reach here, an error occurred that is worth retrying
+            retries += 1
+            if retries <= max_retries:
+                # Add a little "jitter" (randomness) so multiple workers don't 
+                # all retry at the exact same millisecond.
+                sleep_with_jitter = wait_time + random.uniform(0, 1)
+                logger.info(f"Retrying in {sleep_with_jitter:.2f} seconds...")
+                time.sleep(sleep_with_jitter)
+                wait_time *= 2  # Double the wait for next time
+
+        logger.error("Max retries exceeded. Request failed.")
+        return None
+
+
     def generate(self, prompt):
         """The main method to get a response from the AI."""
         self._refill()
@@ -51,7 +104,6 @@ class LLMClientWrapper:
         
         try:
             logger.info(f"Sending request to {self.model}...")
-            #The OpenAI AgentSDK have no access to the up to date datas.
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}]
