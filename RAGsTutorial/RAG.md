@@ -150,7 +150,7 @@ When a user asks a question like *"What were the Q3 profits from 2023?"*, an LLM
 **situation where the system fetches too many document chunks—or chunks that are too long—and "stuffs" them into the LLM's prompt**
 ### Why it occurs?
 1. High $k$ Values: 
-  -If $k$ is set too high (e.g., $k=20$), the system might retrieve 3 relevant chunks and 17 "distractors" that happen to share similar keywords but are irrelevant to the user's specific question.
+  - If $k$ is set too high (e.g., $k=20$), the system might retrieve 3 relevant chunks and 17 "distractors" that happen to share similar keywords but are irrelevant to the user's specific question.
 *In the retrieval step, the system asks for the "top $k$" most similar documents.*
 2. Large or Inefficient Chunking
 3. 3. Vague or Broad Queries
@@ -167,19 +167,19 @@ When a user asks a question like *"What were the Q3 profits from 2023?"*, an LLM
 **a phenomenon where the original meaning or intent of information is gradually distorted, lost, or "shifted" as it travels through the various stages of the AI pipeline.**
 ### Why it occurs?
 1. The "Dumb Chunking" Problem
-  -If you use fixed-size chunking, you might slice a sentence exactly where the critical context lives.
+  - If you use fixed-size chunking, you might slice a sentence exactly where the critical context lives.
 *Ex: ... not allowed to park here after 5 PM. Cut into "not allowed to park" and "here at 5 PM".*
 2. Embedding Model Limitations (Lossy Compression)
-  -The model might prioritize general "themes" over specific "negations.
+  - The model might prioritize general "themes" over specific "negations.
 *Ex: If a user asks for "non-dairy options" and the model focuses on the word "dairy," it may retrieve "Whole Milk" documents because they are mathematically close in the "milk" vector space, even though the intent is the opposite.*
 3. Query-Document Mismatch
-  -The semantic gap between these two terms can cause the retriever to "drift" toward irrelevant but similarly phrased documents
+  - The semantic gap between these two terms can cause the retriever to "drift" toward irrelevant but similarly phrased documents
 4. Multilingual "Attractors" 
-  -The LLM might "drift" its response into English because its training data is heavily English-centric, causing it to ignore the linguistic nuances of the retrieved context.
+  - The LLM might "drift" its response into English because its training data is heavily English-centric, causing it to ignore the linguistic nuances of the retrieved context.
 ### Way to fix
 1. Semantic Chunking (Meaning-Based Splits)
 2. Knowledge Graph Integration (GraphRAG)
-  -By linking text chunks to a Knowledge Graph, you ground the semantic search in hard relationships.
+  - By linking text chunks to a Knowledge Graph, you ground the semantic search in hard relationships.
 *If a chunk mentions "Nvidia," the graph knows it's a "Company" that makes "GPUs."*
 
   
