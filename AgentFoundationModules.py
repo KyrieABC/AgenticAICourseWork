@@ -110,7 +110,7 @@ client=OpenAI(api_key=os.getenv(""),base_url=" ") #--Create a object. (Model cou
 response=client.responses.create(
     model="gpt-4o-mini",#or some other models
     #Required
-    instruction="Your instruction for the model that is used as system prompt",
+    instructions="Your instruction for the model that is used as system prompt",
     #instruction are also used as a part of the context window
     input="This is user's input",
     #required
@@ -119,26 +119,28 @@ response=client.responses.create(
             "schema":{
                 "type":"object",
                 "properties":{
-                    "key":{"ype":"string"
+                    "key":{"type":"string"
                     }
                 }
             }
         },
-    truncation="auto",#or "disabled", this mean cutting off data,like 3.9->3(Also for string) 
+    truncation="auto", #or "disabled", this mean cutting off data,like 3.9->3(Also for string) 
     #With videos
-    img_url="Image url"
+    img_url="Image url",
     input=[
         {"role":"user",
          "content":[
+             #check for the type and format
             {"type":"input_image","image_url":f"{img_url}"}
             ]
         }
     ]
 )
+
 #Or use Chat Completions API
 completion=client.chat.completions.create(
     model="gpt-4o-mini",#required
-    message=[
+    messages=[
         {"role":"system","content":"set the bahavior, constraints/rules, format instruction"},
         #Ex: You are a sarcastic and witty assistant. Always respond in JSON format with keys: 'answer', 'confidence', 'sources'
         {"role":"user","content":"question/requests"},
@@ -151,6 +153,7 @@ completion=client.chat.completions.create(
         #Mars is the 4th planet from the Sun(when user ask tell me about mars)
     ]
 )
+
 #!Just an interesting fact, temperature controls the randomness or creativity of the output
 #or multi-turn:
 """
