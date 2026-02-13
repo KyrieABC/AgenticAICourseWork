@@ -151,7 +151,7 @@ completion=client.chat.completions.create(
         #Mars is the 4th planet from the Sun(when user ask tell me about mars)
     ]
 )
-#!Just an interesting fact, temperature controls teh randomness or creativity of the output
+#!Just an interesting fact, temperature controls the randomness or creativity of the output
 #or multi-turn:
 """
 messages = [
