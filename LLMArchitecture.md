@@ -20,16 +20,16 @@
   - *It then merges the most frequent pairs into a single new token.*
 4. Encoding/Mapping
   - Every unique token in the final vocabulary is assigned a unique integer (ID)
-### **Mathematical Reasoning:** 
-Minimize the sequence length while keeping the vocabulary size manageable.
+  ### **Mathematical Reasoning:** 
+  Minimize the sequence length while keeping the vocabulary size manageable.
 ### BPE:
 *aaabdaaabac -> ZabdZabac (Z=aa) -> ZYdZYac (Y=ab) -> WdzWac (W=ZY=aaab)*
 
 ## Scaling Laws
-  - Describe the predictable relationship between a model's performance (measured as "loss" or error) and the resources used to train it
-N: The number of parameters (the "brain" size)
-D: The number of tokens trained on (the "knowledge" volume)
-C: The total floating-point operations (FLOPs) used for training
+  - Describe the predictable relationship between a model's performance (measured as "loss" or error) and the resources used to train it.
+  N: The number of parameters (the "brain" size).
+  D: The number of tokens trained on (the "knowledge" volume).
+  C: The total floating-point operations (FLOPs) used for training. 
 **Mathematical Reasoning**
 Power Laws:
   L(N,D) = E + A / N^a + B / D^b
@@ -55,7 +55,7 @@ Chinchilla Breakthrough:
 3. Sampling (The "Classroom")
   - During training, the model only samples data where the difficulty score d(x) <= c(t)
   - As t increases, the "window" of data expands until the model is eventually training on the entire dataset.
-### **Mathematical Reasoning**
+  ### **Mathematical Reasoning**
   - Introduce a weight function W(x,t) that modifies the distribution at time t
 ***
 ***
@@ -86,7 +86,7 @@ When generating the token at position t+1:
 Three types of parallelism
 1. Tensor Parallelism
   - Splits individual weight matrices (tensors) across multiple GPUs
-### **Mathematical Reasoning**
+  ### **Mathematical Reasoning**
   Column Parallelism: 
     - W split vertially W=[W1|W2]
     Y=X[W1|W2] = [XW1|XW2]
