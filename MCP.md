@@ -57,6 +57,28 @@
 #### Notification
   - **The protocol supports real-time notifications to enable dynamic updates between servers and clients**
 
+### Core Message Types:
+#### Initialization Messages
+  - **`initialize` Request**: Establishes connection and negotiates protocol version and capabilities
+  - **initialize` Response**: Confirms supported features and server information
+  - **`notification/initialized`**: Signals that initialization is complete and the session is ready
+#### Discovery Messages
+  - **`tools/list` Request**: Discovers available tools from the server
+  - **`resources/list` Request**: Lists available resources (data sources)
+  - **`prompts/list` Request**: Retrieves available prompt templates
+#### Execution Messages
+  - **`tools/call` Request**: Executes a specific tool with provided parameters
+  - **`resources/read` Request**: Retrieves content from a specific resource
+  - **`prompts/get` Request**: Fetches a prompt template with optional parameters
+#### Client-side Messages
+  - **`sampling/complete` Request**: Server requests LLM completion from the client
+  - **`elicitation/request`**: Server requests user input through the client interface
+  - **Logging Messages**: Server sends structured log messages to the client
+#### **Notification Messages**
+  - **`notifications/tools/list_changed`**: Server notifies client of tool changes
+  - **`notifications/resources/list_changed`**: Server notifies client of resource changes  
+  - **`notifications/prompts/list_changed`**: Server notifies client of prompt changes
+
 ### Data Layer Examples:
 1. **Initialization (Lifecycle Management)**
   - Initialize Request (From Host to Server  to establish capabilities and constraints):
@@ -234,3 +256,8 @@
 ```
   - Upon receiving this notification, the client typically reacts by requesting the updated tool list (keep client's understanding of available tools up-to-date)
   - **When the AI application receives a notification about changed tools, it immediately refreshes its tool registry and updates the LLM’s available capabilities**
+
+### Message Structure
+  - **Request Message**: Include `id`, `method`, `params`
+  - **Response Message**: Include `id`, either `result` or `error`
+  - **Notification**: Include `method`, optional `params`
