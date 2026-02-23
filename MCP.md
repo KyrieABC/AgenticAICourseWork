@@ -261,3 +261,180 @@
   - **Request Message**: Include `id`, `method`, `params`
   - **Response Message**: Include `id`, either `result` or `error`
   - **Notification**: Include `method`, optional `params`
+
+### MCP Server
+#### Tools (schema-defined interfaces that LLMs can invoke)
+  - `tools/list`: Discover available tools (return array of tool definition with schemas)
+  - `tools/call`: Execute a specific tool (Tool execution result)
+```
+{
+  name: "searchFlights",
+  description: "Search for available flights",
+  inputSchema: {
+    type: "object",
+    properties: {
+      origin: { type: "string", description: "Departure city" },
+      destination: { type: "string", description: "Arrival city" },
+      date: { type: "string", format: "date", description: "Travel date" }
+    },
+    required: ["origin", "destination", "date"]
+  }
+}
+```
+  - Call: searchFlights(origin: "", destination: "", date: "")
+  - MCP emphasizes human oversight through several mechanisms
+    - Permission settings for pre-approving certain safe operations
+    - Activity logs that show all tool executions with their results
+#### Resources (expose data from files, APIs, databases, or any other source that an AI needs to understand context)
+  - `resources/list`: List available direct resources (return array of resource descriptor)
+  - `resources/templates/list`: Discover resource templates (return array of resource template definition)
+  - `resources/read`: Retrieve resource content (return resource data with metadata)
+  - `resources/subscribe`: Monitor resource changes (return subscription confirmation)
+**Resource support two discovery patterns**
+  1. Direct Resources: fixed URLs that point to specific data
+  2. Resource Templates: dynamic URIs with parameters for flexible queries
+    - Ex: `travel://activities/{city}/{category}` - returns activities by city and category
+Ex:
+```
+{
+  "uriTemplate": "weather://forecast/{city}/{date}",
+  "name": "weather-forecast",
+  "title": "Weather Forecast",
+  "description": "Get weather forecast for any city and date",
+  "mimeType": "application/json"
+}
+
+{
+  "uriTemplate": "travel://flights/{origin}/{destination}",
+  "name": "flight-search",
+  "title": "Flight Search",
+  "description": "Search available flights between cities",
+  "mimeType": "application/json"
+}
+```
+  - User Interaction Model :
+    1. Search and filter interfaces for finding specific resources
+    2. Manual or bulk selection interfaces for including single or multiple resources
+#### Prompts
+  - `prompts/list`: Discover available prompts (return array of prompt descriptions)
+  - `prompts/get`: Retrieve prompt details (return full prompt definition with arguments)
+Ex:
+```
+{
+  "name": "plan-vacation",
+  "title": "Plan a vacation",
+  "description": "Guide through vacation planning process",
+  "arguments": [
+    { "name": "destination", "type": "string", "required": true },
+    { "name": "duration", "type": "number", "description": "days" },
+    { "name": "budget", "type": "number", "required": false },
+    { "name": "interests", "type": "array", "items": { "type": "string" } }
+  ]
+}
+```
+  - Structured input: Barcelona, 7 days, $3000, [“beaches”, “architecture”, “food”] by user invoking (Not exactly): 
+  ```
+  {
+  "prompt": "plan-vacation",
+  "arguments": 
+    {
+    "destination": "Barcelona",
+    "departure_date": "2024-06-15",
+    "return_date": "2024-06-22",
+    "budget": 3000,
+    "travelers": 2
+    }
+  }
+  ```
+**Real power of MCP emerges when multiple servers work together, combining their specialized capabilities through a unified interface**
+
+### MCP Client
+#### Elicitation (provides a structured way for servers to gather necessary information on demand)
+Ex:
+```
+{
+  method: "elicitation/requestInput",
+  params: {
+    message: "Please confirm your Barcelona vacation booking details:",
+    schema: {
+      type: "object",
+      properties: {
+        confirmBooking: {
+          type: "boolean",
+          description: "Confirm the booking (Flights + Hotel = $3,000)"
+        },
+        seatPreference: {
+          type: "string",
+          enum: ["window", "aisle", "no preference"],
+          description: "Preferred seat type for flights"
+        },
+        roomType: {
+          type: "string",
+          enum: ["sea view", "city view", "garden view"],
+          description: "Preferred room type at hotel"
+        },
+        travelInsurance: {
+          type: "boolean",
+          default: false,
+          description: "Add travel insurance ($150)"
+        }
+      },
+      required: ["confirmBooking"]
+    }
+  }
+}
+```
+  - Request: Clients display elicitation requests with clear context about which server is asking, why the information is needed, and how it will be used
+  - Response: Users can provide the requested information through appropriate UI controls (text fields, dropdowns, checkboxes), decline to provide information with optional explanation, or cancel the entire operation
+    - Clients validate responses against the provided schema before returning them to servers
+  - **Elicitation never requests passwords or API keys**
+#### Roots (a mechanism for clients to communicate filesystem access boundaries to servers)
+  - **Consist of file URIs that indicate directories where servers can operate (Roots are exclusively filesystem paths and always use `file://` URI scheme)**
+  - **Root list can be updated dynamically with servers receiving notification through `roots/list_changed` when boundaries change**
+  - **Roots serve as a coordination mechanism between clients and servers, not a security boundary**
+Structure Ex:
+```
+{
+  "uri": "file:///Users/agent/travel-planning",
+  "name": "Travel Planning Workspace"
+}
+```
+  - *Well-behaved servers respect these boundaries—accessing templates, saving the new itinerary, and referencing client documents within the specified roots*
+  - If the agent opens an archive folder like `file:///Users/agent/archive/2023-trips`, the client updates the roots list via `roots/list_changed`
+#### Sampling (enables servers to perform AI-dependent tasks without directly integrating with or paying for AI models)
+Workflow:
+  1. Server initialize sampling request
+  2. Human-in-the-loop review
+    - client present request to user for approval (LLM access)
+    - user review and approve/modify
+  3. client forward the approved request to LLM (from user since server is model-independent)
+  4. LLM return generation to client
+  5. client present the response to user for approval
+  6. user approve/modify
+  7. client return approved response to server
+Ex request:
+```
+{
+  messages: [
+    {
+      role: "user",
+      content: "Analyze these flight options and recommend the best choice:\n" +
+               "[47 flights with prices, times, airlines, and layovers]\n" +
+               "User preferences: morning departure, max 1 layover"
+    }
+  ],
+  modelPreferences: {
+    hints: [{
+      name: "claude-sonnet-4-20250514"  // Suggested model
+    }],
+    costPriority: 0.3,      // Less concerned about API cost
+    speedPriority: 0.2,     // Can wait for thorough analysis
+    intelligencePriority: 0.9  // Need complex trade-off evaluation
+  },
+  systemPrompt: "You are a travel expert helping users find the best flights based on their preferences",
+  maxTokens: 1500
+}
+```
+  - Sampling requests require explicit user consent.
+  - Users can set model preferences, configure auto-approval for trusted operations, or require approval for everything. Clients may provide options to redact sensitive information.
+  
