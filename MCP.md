@@ -294,6 +294,7 @@
   1. Direct Resources: fixed URLs that point to specific data
   2. Resource Templates: dynamic URIs with parameters for flexible queries
     - Ex: `travel://activities/{city}/{category}` - returns activities by city and category
+    
 Ex:
 ```
 {
@@ -318,6 +319,7 @@ Ex:
 #### Prompts
   - `prompts/list`: Discover available prompts (return array of prompt descriptions)
   - `prompts/get`: Retrieve prompt details (return full prompt definition with arguments)
+
 Ex:
 ```
 {
@@ -350,6 +352,7 @@ Ex:
 
 ### MCP Client
 #### Elicitation (provides a structured way for servers to gather necessary information on demand)
+
 Ex:
 ```
 {
@@ -392,6 +395,7 @@ Ex:
   - **Consist of file URIs that indicate directories where servers can operate (Roots are exclusively filesystem paths and always use `file://` URI scheme)**
   - **Root list can be updated dynamically with servers receiving notification through `roots/list_changed` when boundaries change**
   - **Roots serve as a coordination mechanism between clients and servers, not a security boundary**
+
 Structure Ex:
 ```
 {
@@ -402,6 +406,7 @@ Structure Ex:
   - *Well-behaved servers respect these boundaries—accessing templates, saving the new itinerary, and referencing client documents within the specified roots*
   - If the agent opens an archive folder like `file:///Users/agent/archive/2023-trips`, the client updates the roots list via `roots/list_changed`
 #### Sampling (enables servers to perform AI-dependent tasks without directly integrating with or paying for AI models)
+
 Workflow:
   1. Server initialize sampling request
   2. Human-in-the-loop review
@@ -412,6 +417,7 @@ Workflow:
   5. client present the response to user for approval
   6. user approve/modify
   7. client return approved response to server
+
 Ex request:
 ```
 {
@@ -437,4 +443,4 @@ Ex request:
 ```
   - Sampling requests require explicit user consent.
   - Users can set model preferences, configure auto-approval for trusted operations, or require approval for everything. Clients may provide options to redact sensitive information.
-  
+
