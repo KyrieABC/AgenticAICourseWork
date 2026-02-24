@@ -81,6 +81,8 @@ Transient errors(network issues, rate limits): Temporary failures that usually r
 LLM-recoverable errors(tool failures,parsing issues): LLM can see the error and adjust its approach
   Ex:
   from langgraph.types import Command
+  from langchain_core.messages import ToolMessage
+  #Missing retry count(might end up infinite), never goes to execute_tool
   def execute_tool(state: State) -> Command[Literal["agent", "execute_tool"]]:
     #Command[Literal["agent],"execute_tool"] means teh goto parameter can only be one of these two, agent or execute_tool
     try:
@@ -92,6 +94,8 @@ LLM-recoverable errors(tool failures,parsing issues): LLM can see the error and 
             update={"tool_result": f"Tool error: {str(e)}"},
             goto="agent"
         )
+  def execute_tool(state: State):
+    
 """
 """
 User-fixable errors(missing information,unclear instructions):Need user input to proceed
