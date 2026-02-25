@@ -19,6 +19,7 @@
     3. `Docker`: Most popular container runtime
     4. `Kubernetes`: Container orchestration at scale
   - Container vs VM
+
 | Feature | Virtual Machines (VMs) | Key Differences | Containers |
 | :--- | :--- | :--- | :--- |
 | **Architecture** | Full OS emulation | **Isolation Level** | Shared kernel architecture |
