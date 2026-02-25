@@ -13,7 +13,6 @@
   - **Subsets**: Logical Divisions within your VPC
     - **Public Subsets**: Connected to internet gateway. Host public-facing ML APIs. Run inference endpoints. Host management components
     - **Private Subnets**: No direct internet access. Host training clusters. Store sensitive datasets. Run internal processing jobs
-  ![VPC Diagram](https://aws.plainenglish.io/how-to-build-a-vpc-in-aws-f66a5fd63bb5)
 
 ## Firewalls
 **Act as filters for all traffic entering and exiting your ML infra**
