@@ -17,7 +17,7 @@
   - Backup & Archival 
 
 ## Block Storage 
-**Fast disk volumns for compute instances**
+**Fast disk volumes for compute instances**
   - Low-latency performance
   - Instance-attacked resources
   - Similar to physical SSDs/HDDs
