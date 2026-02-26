@@ -221,10 +221,10 @@ docker run -v $(pwd)/notebooks:/workspace jupyter
 1. **Start all services**: `docker-compose up`
 2. **Run in background**: `docker-compose up -d`
 3. **Stop and remove**: `docker-compose down`
-Ex:
-  - **API Service**: Custom build from local directory
-  - **Dependency**: API waits for model to start
-  - **Model Service**: pre-built PyTorch image with volume mount
+  - Ex:
+    - **API Service**: Custom build from local directory
+    - **Dependency**: API waits for model to start
+    - **Model Service**: pre-built PyTorch image with volume mount
 ```
 version: "3.9"
 services:
@@ -292,7 +292,7 @@ volumes:
 3. **Performance Issues**: Extended cold-start times for inference services, creating user-visible latency
 4. **Security Vulnerabilities**: Hidden security risk in unused layers and dependencies
 5. **Resource Waste**: Inefficient GPU utilization due to container overhead
-**Solutions**:
+   - **Solutions**:
   - Choose Minimal Base Images (purpose-built images)
   Ex:
     - Slim Python: removes dev tools and extras while keeeping core functionality
