@@ -45,7 +45,7 @@
     - `(container_id)`: unique ID or name of specific container you want to enter
     - `bash`: tell Docker to start a bash shell once inside
     - First run `docker ps` to see list of running containers and grab `(container_id)`, run the command
-  - Ex: *`docker run --gpus all -it \pytorch/pytorch:2.10-cuda12.1-cudnn8 \bash*
+  - Ex: `docker run --gpus all -it \pytorch/pytorch:2.10-cuda12.1-cudnn8 \bash`
     - Pulls the official PyTorch image from Docker Hub, maps host GPUs to the container, launches interactive bash shell
 
 ## Dockerfile - Build Your Own Image
