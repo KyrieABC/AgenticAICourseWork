@@ -206,11 +206,11 @@ docker run -v $(pwd)/notebooks:/workspace jupyter
 ## Docker Compose for Multi-Service AI Systems
   - **One YAML file**: Define entire application stack in a single configuration file
   - **One Command**: Spin up your complete development environment with a single terminal command
-**AI Systems Need Multiple Services**:
-  1. **Model Server**: model inference
-  2. **API Gateway**: handling client requests
-  3. **Database**: storing data and results
-  4. **Worker**: Background processes for data preprocessing or async tasks
+  - **AI Systems Need Multiple Services**:
+    1. **Model Server**: model inference
+    2. **API Gateway**: handling client requests
+    3. **Database**: storing data and results
+    4. **Worker**: Background processes for data preprocessing or async tasks
 
 ### Docker Compose
 1. **Define services, networks, and volumes**: configure each component of your AI system
