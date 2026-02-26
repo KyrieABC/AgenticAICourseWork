@@ -121,7 +121,7 @@ ai-app/
 ### Build the Image
 `docker build -t ai-app:latest .`
   - `ai-app:latest`: Assigns the name `ai-app` and version label `latest` to the image
-  -`.`: tell Docker that the `Dockerfile` and all necessary file are in current directory
+  - `.`: tell Docker that the `Dockerfile` and all necessary file are in current directory
   - Verify with `docker images` too see your new AI app image
 ### Run the container
 `docker run -it -p 8000:8000 ai-app:latest`
