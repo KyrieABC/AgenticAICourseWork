@@ -269,9 +269,10 @@ services:
 ```
 volumes: 
   model-store:
-  services:
-    volumes:
-      - model-store:/models
+
+services:
+  volumes:
+    - model-store:/models
 ```
 
 ### Scaling Services
