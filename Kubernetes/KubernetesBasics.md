@@ -210,9 +210,9 @@ spec:
   # This makes your service accessible from the internet via an external IP address
   type: LoadBalancer
 ```
-    1. Creates a stable IP address for `ai-service`
-    2. Monitors for pods labeled `app:ai-api`
-    3. Load balances incoming traffic from the internet (port 80) to those pods (port 8000)
+  1. Creates a stable IP address for `ai-service`
+  2. Monitors for pods labeled `app:ai-api`
+  3. Load balances incoming traffic from the internet (port 80) to those pods (port 8000)
 
 #### Types of Services
 1. **ClusterIP**: Default type that exposes the Service on an internal cluster IP
