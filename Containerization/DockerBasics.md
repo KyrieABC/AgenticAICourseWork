@@ -237,18 +237,24 @@ docker run -v $(pwd)/notebooks:/workspace jupyter
     - **Dependency**: API waits for model to start
     - **Model Service**: pre-built PyTorch image with volume mount
 ```
+docker-compose.yml file:
 version: "3.9"
+# The root node defining different services (containers) defines your application
 services:
-  api: 
-    build: ./api
+  api: # First container
+    # Tell docker to build the image for this service from a Dockerfile located in the ./api directory on your host machine
+    build: ./api 
     ports:
-      - "8000:8000"
+      # Port Mapping. It maps port 8000 on your host machine to port 8000 inside the api container
+      - "8000:8000" 
     depends_on:
-      - model
-  model:
+      # Ordering. It tells Docker to start the model service before starting the api service
+      - model 
+  model: # Second container 
     image: pytorch/pytorch:2.1.0-cuda12.1-cudnn8
     volumes:
-      - ./models:/models
+      # Volume Mapping (Bind Mount). It mounts the directory ./models from your host machine into the /models directory inside the container
+      - ./models:/models 
 ```
 
 ### Network in Compose
