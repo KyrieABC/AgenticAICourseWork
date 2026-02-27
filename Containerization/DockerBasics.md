@@ -167,6 +167,11 @@ ai-app/
 - **Mount with special syntax**
 ```
 docker run -v /host:/container/data ai-app
+# -v: flag for volume mapping (mount volume inside container)
+# /host: The absolute path to the folder or file on your Host machine (your computer) that you want to share
+# : - The separator between host path and container path
+# /container/data: The absolute path inside the Container where the host folder will be mounted
+# ai-app: The name of the Docker image to use for the container
 ```
   - Map host path to container path
 
@@ -181,6 +186,7 @@ docker run -v /host:/container/data ai-app
   docker run -v model-store:/app/models ai-app
   ```
 3. **Share Across Container**: Same volume used in multiple containers
+     - When you run a second container using the same named volume, Docker mounts the exact same data into that new container
   ```
   docker run -v model-store:/models inference-api
   ```
