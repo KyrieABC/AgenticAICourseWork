@@ -8,6 +8,8 @@
   - Any libraries you install now (like NumPy or PyTorch) will stay inside this environment(ai) and won't clutter up your main computer
 4. `python -V`
   - To list the version for the Python versions(should be 3.10 for this)
+5. `conda deactivate`
+  - To deactivate an active environment
 
 # Docker Engine Install
 
