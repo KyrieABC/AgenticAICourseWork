@@ -267,12 +267,18 @@ services:
 2. **Shared Resources**: Store model weights, checkpoints, and datasets
 3. **Training -> Inference**: Perfect for AI workflows that generate and then use models
 ```
-volumes: 
-  model-store:
-
+docker-compose.yml file:
+version: "3.9"
 services:
-  volumes:
-    - model-store:/models
+  inference-api: #container 1
+    image: my-ai-app
+    # 2. MOUNT the volume into the container
+    volumes:
+      # It takes the named volume model-store and makes it accessible inside the inference-api container at the path /models
+      - model-store:/models
+# 1. DEFINE the named volume
+volumes:
+  model-store:
 ```
 
 ### Scaling Services
