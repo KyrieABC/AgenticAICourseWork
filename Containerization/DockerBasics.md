@@ -144,6 +144,10 @@ ai-app/
 - **Port Mapping**: linking a port on host machine (your computer or server) to a port inside the isolated container
   - Without mapping, services are only accessible internally
   - Essential for inference endpoints that need external requests
+  ```
+  docker run -p 8080:80 nginx
+  #Run web service (Nginx) that listen on port 80 (port inside container) internally, but access it on port 8080 on your machine (port on host machine)
+  ```
 4. **Custom Docker Network**
   - Perfect for complex ML systems with databases, APIs and worker containers
   - Containers on same custom network can:
