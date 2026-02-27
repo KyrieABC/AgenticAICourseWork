@@ -135,26 +135,43 @@
     3. Uses labels to track and manage all related pods
     4. Exposes port 8000 for the application
   ```
+  # A yaml (.yml) file define kubernetes deployment:
+  # Tells Kubernetes which version of the API to use to create this resource (apps/v1 is the standard for Deployments)
   apiVersion: apps/v1
   kind: Deployment
-  metadata: 
+  # Contains data that helps uniquely identify the object
+  metadata:
+    # The name of this deployment is ai-api
     name: ai-api
+  # Defines the desired behavior of the Deployment
   spec:
+    # Tells Kubernetes to always keep three copies (pods) of this application running. If one dies, Kubernetes starts a new one automatically
     replicas: 3
+    # Defines how the Deployment finds which Pods to manage
     selector:
+      # The Deployment manages any Pod that has the label app: ai-api
       matchLabels:
         app: ai-api
+    # Defines the blueprint for the pods that will be created
     template:
       metadata:
+        # Crucial line. This applies the label app: ai-api to the pods. The selector above uses this label to identify them
         labels:
           app: ai-api
       spec:
+        # Defines the containers running inside the pod
         containers:
+          # Gives the container within the pod the name api
           - name: api
           images: ai-app:latest
+          # Tells Kubernetes that the application inside this container is listening for traffic on port 8000
           ports:
             - containerPort: 8000
   ```
+  1. Ensure 3 Pods are running
+  2. Label them with `app: ai-api`
+  3. Run your `ai-app:latest` image inside them
+  4. Configure networking so the container inside can receive traffic on port 8000
 
 #### Deployments for AI workloads
   - **Training jobs**: Often managed via specialized custom controllers or operators like KubeFlow, rather than standard Deployments
@@ -173,17 +190,28 @@
     2. Automatically load balances requests across all replicas
     3. Provides a stable external IP address
 ```
+# YAML files define kubernetes services:
 apiVersion: v1
 kind: Service
-metadata: 
+metadata:
+  # The name of this service is ai-service. Other services in your cluster can use this name to find it via DNS
+  # DNS: a built-in service discovery mechanism that automatically assigns DNS names to services and pods, allowing them to communicate using human-readable names instead of IP addresses
   name: ai-service
 spec:
   selector:
+    # Crucial line. This is how the Service finds the Pods to send traffic to. It looks for any pod in the cluster with the label app: ai-api
     app: ai-api
+  # Defines how network traffic is handled
   ports:
     - protocol: TCP
+    # The Service Port. This is the port that the service itself listens on inside the cluster
+    # Other applications in the cluster will talk to ai-service on port 80
     port: 80
+    # The Container Port. This is the port the actual application inside the pods is listening on (matching the containerPort in your Deployment)
+    # The Service forwards traffic from port 80 to port 8000
     targetPort: 8000
+  # Tells Kubernetes to request a physical Load Balancer from your cloud provider (like AWS ELB)
+  # This makes your service accessible from the internet via an external IP address
   type: LoadBalancer
 ```
 
