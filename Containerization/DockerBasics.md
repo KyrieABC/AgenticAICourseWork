@@ -92,6 +92,7 @@
 ai-app/
   |--- app.py #FastAPI code
   |--- model.pt #saved PyTorch
+# Make sure to be clear with the subdirectory (model) WORKDIR (Dockerfile) relationship
  model
   |--- requirement.txt
   |--- Dockerfile
