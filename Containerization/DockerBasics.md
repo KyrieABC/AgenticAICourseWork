@@ -36,7 +36,7 @@
     - Docker read the `Dockerfile` in current folder, runs each instruction one by one, each step creates an 'layer' in image, once finished the final imageis stored in local Docker library name `myimage`
   - `docker run -it myimage`: Run a container interactively
     - `docker run`: Docker create and start a new container from an image
-    - `-t`: Keeps the standard input open even if not attached
+    - `-i`: Keeps the standard input open even if not attached
     - `-t`: Allocates a pseudo-terminal, makes it look and feel like a real terminal session
     - `myimage`: name of the image you want to use to start container
     - Docker creates a writable container layer over read-only image, it assigns a local IP address and network interface to container, it executes the default startup command defined in the `Dockerfile`, (because of `-it`) you no longer typing commands on host terminal, instead you are typing them inside isolated container environments
