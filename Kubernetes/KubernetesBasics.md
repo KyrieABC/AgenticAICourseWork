@@ -144,7 +144,7 @@
     # The name of this deployment is ai-api
     name: ai-api
   # Defines the desired behavior of the Deployment
-  spec:
+  spec: # Desired state
     # Tells Kubernetes to always keep three copies (pods) of this application running. If one dies, Kubernetes starts a new one automatically
     replicas: 3
     # Defines how the Deployment finds which Pods to manage
@@ -185,10 +185,6 @@
   - Decouples frontend clients from backend pod implementations
   - Enables discovery through DNS within the cluster
   - Comes in multiple types for different access patterns
-  - Ex:
-    1. Maps external port 80 to container port 8000
-    2. Automatically load balances requests across all replicas
-    3. Provides a stable external IP address
 ```
 # YAML files define kubernetes services:
 apiVersion: v1
@@ -214,6 +210,9 @@ spec:
   # This makes your service accessible from the internet via an external IP address
   type: LoadBalancer
 ```
+    1. Creates a stable IP address for `ai-service`
+    2. Monitors for pods labeled `app:ai-api`
+    3. Load balances incoming traffic from the internet (port 80) to those pods (port 8000)
 
 #### Types of Services
 1. **ClusterIP**: Default type that exposes the Service on an internal cluster IP
