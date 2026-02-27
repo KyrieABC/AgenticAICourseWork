@@ -286,7 +286,13 @@ volumes:
   2. Spread inference requests across multiple containers
   3. Scale different components independently based on bottlenecks
   ```
+  # docker-compose: The CLI tool used to run multi-container applications defined in a docker-compose.yml file
+  # --scale: The flag used to adjust the number of containers to run for a specific service
+  # api=3: The target service (api) and the desired number of instances (3).
+  # Adjust counts: If 0 running, start 3. If 1 running, start 2. If 4 running, stops one
   docker-compose up --scale api=3
+  # Manages Ports: If you have port mapping defined (e.g., "8000:8000") in your docker-compose.yml, Docker will automatically assign random high-numbered host ports to the new containers to avoid conflicts, while keeping the internal container port the same
+  # internal container port: Inside the Dockerfile, you might see: EXPOSE 5000, internal container port: 5000. OR   docker run -p 3000:5000 my-python-app, 5000 is internal container port where the Python app is listening
   ```
 
 ### Advantage of Docker Compose
