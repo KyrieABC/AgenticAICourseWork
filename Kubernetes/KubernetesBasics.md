@@ -366,3 +366,172 @@ spec:
   - Consider ReadWriteMany volumes for shared datasets
   - Be aware of volume mount performance impacts
   - Use cloud-managed storage for every large datasets
+
+## Horizontal Pod Autoscaling for AI inference
+  - **Variable Traffic**: Inference workloads experience unpredictable spikes and idle periods, creating unique scaling challenges
+  - **Cost Optimization**: Overprovisioning GPUs and CPUs wastes thousands in cloud spend that could be allocated elsewhere
+  - **Performance Impact**: Underprovisioning leads to increased latency, failed requests, and degraded user experience
+  - Kubernetes Horizontal Pod Autoscalar (HPA) provides the dynamic scaling mechanism needed to balance these competing concerns
+
+### What is Horizontal Pod Autoscaling (Kubernetes resource)
+  - Automaticall adjusts replica count of pods based on observed metrics
+  - Watch CPU, memory, or custom metrics to make scaling decisions
+  - Maintains workload responsiveness under variable load
+  - Runs continuously in the background without manual intervention
+  - **Ideal for AI inference APIs where user traffic is unpredictable and resource demands fluctuate**
+
+### How HPA works
+1. **Metrics Collection**: Metrics server continuously collects resource usage data from all pods in cluster
+2. **Threshold Comparison**: HPA controller compares actual metrics against target thresholds defined in the HPA specification
+3. **Scale Up Decision**: If load increases above target, controller calculates new replica count and scales deployment up
+4. **Scale Down Decision**: If load drops below target, controller waits for stabilization period, then reduces replicas
+  - HPA controller implements a control loop that runs every 15 seconds by default, continuously balancing replicas to match actual demand
+```
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoScaler
+metadata:
+  name: ai-inference-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ai-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+```
+  1. Scales to keep CPU utilization at 70%
+  2. Use the `autoscaling/v2` API (stable)
+
+### HPA for AI Inference workloads
+  - **Handling Inference Spikes**: Automatically scales API pods during peak traffic periods, such as business hours or marketing events, when requests to LLMs or vision models spike
+  - **Latency Management**: Maintains consistent low latency by ensuring enough pods are available to process inference requests without queuing
+  - **Cost Efficiency**": Reduces expensive GPU/accelerator costs during off-peak hours by scaling down pods when they're not needed
+
+### Custom Metrics for AI
+1. **GPU Utilization**: Scale based on actual GPU compute or memory usage
+2. **Request Latency**: Scale when p95/p99 inference time exceed thresholds
+3. **QPS (Queries Per Second)**: Scale directly based on traffic volume to the service
+  - **Tools**:
+    1. **Prometheus Adapter**: Exposes custom metrics to Kubernetes API
+    2. **KEDA**: supports event-driven scaling
+    3. **DCGM Exporter**: Exports NVIDIA GPU metrics
+
+### Autoscaling in Cloud AI Services
+  - Cloud-manged AI services implement autoscaling by default, with a scaling-first architecture that's optimized for variable inference loads
+
+### Limitation of HPA
+1. **Scaling Delay**: Container startup and model loading create cold-start latency 
+2. **Not for Training**: Unsuitable for batch training jobs 
+3. **Stateless Only**: Works best for stateless inference services
+4. **GPU Complexity**: GPU fractional allocation and bin-packing are more challenging than CPU
+5. **Tuning Required**: Requires careful min/max replica configuration based on workload
+
+### Best Practice
+1. **Redundancy**: ALways set minReplicas >> 1 to maintain high availability during scaling events or node failures
+2. **Readiness Probes**: Implement proper readiness probes to ensure pods only receive traffic after models are fully loaded
+3. **Monitoring**: Create dedicated Prometheus + Grafana dashboards to visualize scaling events and resource usage
+4. **Multi-level Scaling**: Combine HPA with Cluster Autoscaler to ensure nods are available when pod count increases
+
+## Helm Charts for Simplified AI Deployments
+  - Raw Kubernetes YAML manifests are:
+    1. Long and repetitive
+    2. Difficult to manage and scale
+    3. Prone to configuration errors
+    - AI applications require multiple manifests for Deployment, Services, PVCs and ingress resources
+  - Helm solves these problems as a Kubernetes package managerL
+    1. Simplifies installation & updates
+    2. Works like apt/pip for Kubernetes
+    3. Package related resources together
+    4. Enables templating and reuse
+
+### What is Helm
+1. **Chart Packaging**: Packages Kubernetes YAML manifests into reusable Charts that can be versioned and shared across teams and environments
+2. **Templating**: Supports powerful templating for configuration flexibility and maintainable infrastructure definitions
+3. **Versioning & Rollbakcs**: Provides built-in versioning and rollback capabilities for reliable deployments for ML models and infrastructure
+
+### Helm vs Raw YAML
+1. YAML:
+  - Verbose and repetitive
+  - Hard to maintain at scale
+  - Environment-specific values embedded
+  - No built-in versioning
+2. Helm Advantages
+  - Parameterized, DRY approach
+  - Reuse configs across environments
+  - Built-in rollbacks for failed releases
+  - Makes AI infrastructure modular
+
+### Anatomy of a Helm Chart
+```
+my-ai-chart/
+  # metadata
+  |--- Chart.yaml 
+  # default configs
+  |--- values.yaml
+  # k8s YAML templates, containing templated Kubernetes manifests
+  |--- templates/
+    |--- deployment.yaml
+    |--- service.yaml
+    |--- ingress.yaml
+```
+  - value.yaml files provides single source of configuration that:
+    1. Controls deployment scale, image, and service type
+    2. Allows engineers to tune parameters without editing YAML
+    3. Separates configuration from implementation
+    4. Makes GPU/memory allocatoin explicit and stardardized
+    5. Simplifies environment-specific configuration
+  - Ex of values.yaml:
+```
+replicaCount: 3
+image:
+  repository: ai-app
+  tag: latest
+service:
+  type: LoadBalancer
+  port: 80
+resources:
+  limits:
+    cpu:"2"
+    memory"4Gi"
+```
+ 
+### Installing a Chart
+1. **Install a custom AI Chart**: `helm install my-ai-app ./my-ai-chart`
+  - Deploy your own AI application with one command
+2. **Add repository for public charts**: `helm repo add bitnami https://charts.bitnami.com/bitnami`
+  - Access libraries of pre-built charts for common ML tools
+3. **Install from repository**: `helm install mlflow bitnami/mlflow`
+  - Deploy complex ML infrastructure with a single command
+    
+### Helm for AI Pipelines
+1. Common AI Tools Available as Charts:
+  - MLFlow for experiment tracking
+  - Kubeflow components for ML pipelines
+  - Model serving platforms
+  - Monitoring tools
+2. Benefits for ML Teams
+  - Package inference APIs with Helm charts
+  - Reuse charts across teams & environments
+  - Accelerate infrastructure deployments
+  - Standardize ML platform components
+
+### Rollbacks & Updates
+1. **Update**: `helm upgrade my-ai-app ./chart`
+  - Safely deploy new model versions or configuration changes
+2. **Rollback**: `helm rollback my-ai-app 1`
+  - Instantly revert to previous version if issues occur
+3. **Canary Deploy**
+  - Support for canary deployments when testing new ML models in production
+
+### Best Practice 
+1. **Version Control**: Keep charts version-controlled in GIt using GitOps principles
+2. **Environment Values**: Use separate values.yaml file for dev, staging and production
+3. **Chart Repository**: Store enterprise AI charts in private repositories for security and governance
+4. **CI/CD Integration**: Combine with CI/CD for automated deployments of ML models
