@@ -120,7 +120,7 @@
 
 ## Deployments and Services for AI Application
   - **Pod Problem**: Pods are ephemeral by design and can fail at any time, making them unreliable for production AI workloads
-  - **Deployment Solution**: Deployments manage pod lifecycles, ensurign your AI application maintain the desired state despite failures
+  - **Deployment Solution**: Deployments manage pod lifecycles, ensuring your AI application maintain the desired state despite failures
   - **Service Access**: Services provide stable network endpoints, making your AI APIs consistenly accessible
 
 ### Deployment
@@ -262,8 +262,11 @@ Kubernetes objects that store non-sensitive configuration data as key-value pair
     name: ai-config
   data:
     BATCH_SIZE: "64"
+    # File path inside container where the application should look for the pre-trained model
     MODEL_PATH: "/models/resnet.pt"
+    # Except for "DEBUG", shows every other information for log
     LOG_LEVEL: "INFO"
+    # It tells the application to turn on a specific piece of functionality—likely more detailed monitoring or telemetry data
     FEATURE_GATE_ADVANCED_METRIC: "true"
   ```
   - Consuming the configMap in a Pod
@@ -271,7 +274,9 @@ Kubernetes objects that store non-sensitive configuration data as key-value pair
   containers:
     - name: inference-service
     image: ai-company/inference:v1.2
+    # Take everything inside a specific source and make it an environment variable
     envFrom:
+      # Specifies that the source of these variables is a ConfigMap
       - configMapRef:
         name: ai-config
   ```
@@ -287,7 +292,9 @@ Kubernetes objects that store non-sensitive configuration data as key-value pair
 apiVersion: v1
 kind: Secret
 metadata:
+  # The unique identifier you'll use when you want to "borrow" these credentials for your app
   name: ai-secret
+# This is the default type for Secrets. It simply means it's a "blob" of arbitrary user-defined data (key-value pairs) with no specific format requirements
 type: Opaque
 data:
   DB_PASSWORD: # password base64
@@ -301,7 +308,9 @@ containers:
   image: ai-company/training:v2.1
   env:
     - name: HF_API_KEY
+    # Don't look for a plain text value here; go fetch it from another resource
     valueFrom:
+      # Specifically points to a Secret as the source
       secretKeyRef:
         name: ai-secret
         key: HF_API_KEY
@@ -320,9 +329,11 @@ metadata:
 spec:
   accessModesL
     - ReadWriteMany
+  # This asks for 100 Gibibytes of space. Kubernetes will look for a physical disk that has at least this much room (resources.requests.storage: 100Gi)
   resources:
     requests:
       storages: 100Gi
+  # This tells Kubernetes what kind of hardware to use. In this case, it's requesting high-performance SSDs rather than slower standard hard drives—essential for loading large models quickly
   storageClassName: ssd-storage
 ```
   - Using the volume in an AI pod:
@@ -335,11 +346,15 @@ spec:
   containers:
     - name: ai-app
     image: pytorch/pytorch:latest
+    # This tells the container where to put the disk
     volumeMounts:
+      # Inside your Linux container, a folder named /models will appear. Anything you save there is actually being written to that 100Gi SSD we defined earlier.
       - mountPath: /models
       name: model-store
   volumes:
+    # This name must match the volumeMounts.name above. It acts as the "glue" between the physical storage and the container folder
     - name: model-store
+    # Tells Kubernetes to go look for an existing claim
     persistentVolumeClaim: 
       claimName: pvc-model
 ```
