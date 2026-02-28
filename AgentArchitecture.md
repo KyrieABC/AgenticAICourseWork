@@ -129,3 +129,153 @@ Control Flow:
   - **Information Bottleneck**: If a Worker finds a critical problem but the Supervisor "summarizes it away" to the Manager, the system makes decisions based on incomplete data
   - **Latency**: Every message must travel up and down the chain of command, making the system slower than a single-agent loop
   - **Managerial Hallucination**: If the Manager is too far removed from the tools, it might order a Worker to perform an impossible task
+
+## Tree-of-Thought
+  - **Definition: Tree-of-Thought is a decoding and reasoning framework that enables LLMs to solve complex tasks by considering multiple "thoughts" as intermediate steps**
+  - It treats problem-solving as a search over a tree structure, where each node represents a partial solution and each branch represents a potential next step
+  - **Thought Decomposition**
+  - **Thought Generator**
+  - **State Evaluator**: A "critic" (often the LLM itself) looks at the proposed thoughts and decides which ones are promising, which are mediocre, and which are failures
+  - **Search Algorithms**: BFS or DFS
+1. **Brainstorming (proposing)**: From the starting point, the AI generates k possible next steps
+2. **Evaluating (pruning)**:  The agent looks at those $k$ options and assigns them a value (e.g., "Sure," "Maybe," or "Impossible")
+3. **Searching (expanding)**: The agent moves forward only with the "Sure" or "Maybe" options, creating new branches from those points
+4. **Backtracking (correcting)**: If all branches from a specific thought lead to "Impossible," the agent "climbs back down" the tree to the last successful node and tries a different branch
+  - *You should opt for a Tree-of-Thought approach when the cost of being wrong is high or the problem requires "look-ahead" reasoning*
+
+## Graph-of-Thought
+  - **Definition: Graph-of-Thought is a framework that models the reasoning process of an AI as a directed graph**
+  - Unlike a tree, where branches only move forward and never meet, GoT allows "thoughts" (nodes) to be combined, looped, or cross-referenced
+  - **Node (thoughts)**: Each node is an intermediate solution or a piece of information
+  - **Edges (Dependencies)**: These show how one thought leads to another
+  - **Aggregation (Merging)**: The ability to take the best parts of Thought A and Thought B to create Thought C
+  - **Transformation (Refining)**: Taking a "rough draft" thought and looping it through a feedback node until it reaches a specific quality threshold
+  - **Graph Controller**: The "brain" that decides which nodes to connect and when a path has reached a dead end
+1. **Generation**: The agent generates multiple independent starting thoughts
+2. **Transformation/Expansion**: The agent expands these thoughts, but unlike a tree, it can use one thought to influence multiple others
+3. **Evaluation & Scoring**: Each node is scored by a "Critic" LLM
+4. **Merging (The Secret Sauce)**: The agent identifies that "Thought A" has a great structural idea and "Thought B" has the correct mathematical data. It creates a new node that combines them
+5. **Looping**: If a result is "good but not perfect," the agent sends the thought back to an earlier stage for refinement (Self-Correction)
+  - Use graph-of-thought if you need a graph to manage that "conversation" between different parts of the problem
+```
+class ThoughtNode:
+    def __init__(self, content, parents=None):
+        self.content = content
+        self.parents = parents or []  # Can have multiple parents (Graph!)
+        self.score = 0.0
+        self.status = "active" # active, validated, or rejected
+
+class GoT_Controller:
+    def __init__(self, initial_prompt):
+        self.graph = [ThoughtNode(initial_prompt)]
+        self.best_solution = None
+
+    def generate_thoughts(self, node, num_variants=3):
+        """Expansion: Creates multiple new potential steps from a single node."""
+        return [LLM.generate_next_step(node.content) for _ in range(num_variants)]
+
+    def evaluate_node(self, node):
+        """Scoring: The LLM acts as a critic to rank the thought."""
+        node.score = LLM.evaluate(node.content) 
+        if node.score < 0.3:
+            node.status = "rejected"
+
+    def merge_thoughts(self, node_a, node_b):
+        """Aggregation: The unique 'Graph' feature where two paths become one."""
+        merged_content = LLM.combine(node_a.content, node_b.content)
+        return ThoughtNode(merged_content, parents=[node_a, node_b])
+
+    def solve(self):
+        # 1. Start with initial ideas
+        initial_ideas = self.generate_thoughts(self.graph[0])
+        for idea in initial_ideas:
+            new_node = ThoughtNode(idea, parents=[self.graph[0]])
+            self.graph.append(new_node)
+
+        # 2. Evaluate and prune
+        for node in self.graph[1:]:
+            self.evaluate_node(node)
+
+        # 3. Find two high-scoring but different thoughts and MERGE them
+        high_scorers = [n for n in self.graph if n.status == "active"]
+        if len(high_scorers) >= 2:
+            optimal_node = self.merge_thoughts(high_scorers[0], high_scorers[1])
+            self.graph.append(optimal_node)
+            
+        # 4. Final Refinement Loop
+        self.best_solution = LLM.refine_to_final_answer(self.graph[-1].content)
+        return self.best_solution
+
+# Usage
+controller = GoT_Controller("Design a carbon-neutral city layout for 1M people.")
+final_plan = controller.solve()
+```
+### Tree-of-Thought vs Graph-of-Thought
+| Feature | Tree-of-Thought (ToT) | Graph-of-Thought (GoT) |
+| :--- | :--- | :--- |
+| **Logic Structure** | Hierarchical (Parent → Child) | Network (Web-like / Mesh) |
+| **Information Flow** | One-way (Down the branches) | Multi-way (Merging and Looping) |
+| **Data Efficiency** | Can be redundant (Repeats work) | High (Reuses and combines nodes) |
+| **Error Handling** | Backtracking to a previous node | Iterative refinement & self-correction |
+| **Ideal Use Cases** | Puzzles, Chess, Linear Planning | Coding, Legal, Research, Architecture |
+
+## Sandboxing
+  - **Definition: The practice of running an agent's actions—such as executing code, calling APIs, or modifying files—inside a strictly isolated, low-privilege environment**
+  - **Compute Isolation**: The agent runs on a separate "MicroVM" or container (like Docker) with its own mini-operating system. It cannot "see" your real files or hardware
+  - **Network Gating**: You control exactly which websites or databases the agent can talk to. By default, most sandboxes block all outgoing internet traffic to prevent data theft
+  - **Resource Caps**: You set limits on CPU, memory, and time. If an agent enters an infinite loop or tries to mine crypto, the sandbox simply kills the process after 30 seconds
+  - **Ephemeral State**: Every time the agent finishes a task, the entire environment is deleted. It’s like a hotel room that is completely gutted and rebuilt after every guest
+1. **Request**: The AI "decides" it needs to calculate a complex math formula or process a CSV file
+2. **Provisioning**: The system spins up a fresh, empty sandbox (e.g., a Docker container) in milliseconds
+3. **Injection**: Only the specific files and data needed for that specific task are copied into the sandbox
+4. **Execution**: The AI runs its code inside the sandbox. If the code says os.remove('/'), it only "deletes" the empty sandbox, not your computer
+5. **Extraction**: The system pulls the result (e.g., the answer to the math problem) back out and displays it to you
+6. **Teardown**: The sandbox is instantly destroyed, wiping any temporary files or errors
+```
+# 1. Setup: Dockerfile
+# Use a slim version of Python to keep it fast
+FROM python:3.11-slim
+# Create a non-privileged user for safety
+RUN useradd -m sandboxuser
+USER sandboxuser
+# Set the working directory inside the sandbox
+WORKDIR /home/sandboxuser/app
+# The sandbox stays idle until we send it code
+CMD ["python3"]
+# 2. Controller (sandbox_manager.py): This Python script on your actual machine will spin up the sandbox, toss the AI's code inside, run it, and bring back the result
+import docker
+import os
+
+def run_in_sandbox(ai_generated_code):
+    client = docker.from_env()
+    
+    # 1. Build the image (only happens once)
+    client.images.build(path=".", tag="ai-python-sandbox")
+
+    try:
+        # 2. Run the container with strict limits
+        result = client.containers.run(
+            image="ai-python-sandbox",
+            command=f'python3 -c "{ai_generated_code}"',
+            network_disabled=True,      # No internet access for the AI
+            mem_limit="128m",           # Limit RAM to 128MB
+            cpu_quota=50000,            # Limit to 50% of one CPU core
+            remove=True,                # Auto-delete container after run
+            stderr=True
+        )
+        return result.decode('utf-8')
+    
+    except Exception as e:
+        return f"Sandbox Blocked Action or Failed: {str(e)}"
+
+# --- Example Usage ---
+dangerous_code = "import os; print('I am trying to see your files:', os.listdir('/'))"
+output = run_in_sandbox(dangerous_code)
+print(f"AI Output:\n{output}")
+```
+  - Why this works?
+    1. **Network Disabled**: If the AI agent tries to send your data to an external server via a `POST` request, the sandbox will simply throw a network error
+    2. **User Permissions**: By using sandboxuser, the AI cannot install new software or change system settings inside the container
+    3. **Memory/CPU Limits**: This prevents "Denial of Service" attacks where an agent might accidentally (or intentionally) create an infinite loop that freezes your actual computer
+    4. **Auto-Removal**: The `remove=True` flag ensures that as soon as the code finishes, the "disposable computer" vanishes, leaving no traces behind
+    - You can potentially add a "Volume Mount" so the sandbox can safely read a specific folder of data without seeing the rest of your system
